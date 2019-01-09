@@ -7,6 +7,7 @@ struct mystruct {
 
 int main(void)
 {
+	struct mystruct m = { 0, 0 };
 	puts("Proof of Concept!");
 	return 0;
 }
