@@ -1,10 +1,10 @@
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.12)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules")
-find_package(Clang REQUIRED)
 
-add_library(randstruct SHARED randstruct.cpp)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
-target_include_directories(randstruct PUBLIC ${CLANG_INCLUDE_DIRS})
+add_subdirectory(src)
+
 set_target_properties(randstruct PROPERTIES
     LINKER_LANGUAGE CXX)
