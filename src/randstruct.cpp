@@ -32,6 +32,11 @@ public:
       fields.push(field);
     }
 
+    #ifndef NDEBUG
+    llvm::errs() << "Type\tSize\tAlign\tOffset\tAligned?\n"
+                 << "----\t----\t-----\t------\t--------\n";
+    #endif
+
     while (!fields.empty()) {
       auto f = fields.top();
       fields.pop();
@@ -40,13 +45,28 @@ public:
       auto align = ctx.getTypeInfo(f->getType()).Align;
       Alignment = Alignment > align ? Alignment : align;
 
-      // llvm::errs() << "offset " <<  Size << ":\t" << f->getNameAsString() <<
-      // "\t(" << width << " bits)\n";
-      FieldOffsets[f] = Size;
-      Size += width;
+      // https://en.wikipedia.org/wiki/Data_structure_alignment#Computing_padding
+      auto padding = (-Size & (align - 1));
+
+      FieldOffsets[f] = Size + padding;
+
+      #ifndef NDEBUG
+      llvm::errs() << f->getType().getAsString() << "\t"
+                   << width << "\t" << align << "\t" << Size + padding << "\t"
+                   << ((Size + width + padding) % align == 0 ? "Yes" : "No") << "\n";
+      #endif
+
+      Size += width + padding;
     }
 
-    // llvm::errs() << "Size: " << Size << " (" << Size / 8 << " bytes)\n";
+    #ifndef NDEBUG
+    llvm::errs() << "\n"
+                 << "Structure Size: " << Size << " bits ("
+                 << "Should be " << Size + (Alignment - (Size % Alignment)) % Alignment << " bits)\n"
+                 << "Alignment: " << Alignment << " bits\n"
+                 << "\n";
+    #endif
+
     return true;
   }
 };
