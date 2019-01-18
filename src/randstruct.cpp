@@ -24,6 +24,7 @@ public:
       llvm::DenseMap<const CXXRecordDecl *, CharUnits> &VirtualBaseOffsets)
       override {
     auto &ctx = Instance.getASTContext();
+    Alignment = 0;
     Size = 0;
 
     std::stack<FieldDecl *> fields;
