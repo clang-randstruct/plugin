@@ -59,6 +59,8 @@ public:
       Size += width + padding;
     }
 
+    // TODO fixme: tail padding is needed for some structures
+
     #ifndef NDEBUG
     llvm::errs() << "\n"
                  << "Structure Size: " << Size << " bits ("
