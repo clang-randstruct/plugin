@@ -59,7 +59,7 @@ public:
       Size += width + padding;
     }
 
-    // TODO fixme: tail padding is needed for some structures
+    Size += (Alignment - (Size % Alignment)) % Alignment;
 
     #ifndef NDEBUG
     llvm::errs() << "\n"
