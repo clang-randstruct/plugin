@@ -59,7 +59,10 @@ public:
       Size += width + padding;
     }
 
-    Size += (Alignment - (Size % Alignment)) % Alignment;
+    // https://en.wikipedia.org/wiki/Data_structure_alignment#Computing_padding
+    auto tailpadded = (Size + (Alignment - 1)) & -Alignment;
+
+    Size = tailpadded;
 
     #ifndef NDEBUG
     llvm::errs() << "\n"
