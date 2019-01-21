@@ -3,3 +3,7 @@ poc/poc
 .vagrant
 *.sw[op]
 *.asm
+src/.settings/
+src/.cproject
+src/.project
+src/Debug/
