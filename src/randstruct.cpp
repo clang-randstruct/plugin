@@ -1,104 +1,92 @@
 #include <stack>
+#include <vector>
 
 #include "clang/AST/AST.h"
-#include "clang/AST/ASTConsumer.h"
-#include "clang/AST/ExternalASTSource.h"
-#include "clang/AST/RecursiveASTVisitor.h"
-#include "clang/Frontend/CompilerInstance.h"
-#include "clang/Frontend/FrontendPluginRegistry.h"
-#include "clang/Sema/Sema.h"
 #include "llvm/Support/raw_ostream.h"
-using namespace clang;
 
-namespace {
+#include "randstruct.h"
 
-class Randstruct : public ExternalASTSource {
-public:
-  Randstruct(CompilerInstance &I) : Instance(I) {}
-  CompilerInstance &Instance;
+// TODO Implement Randomization algorithm. Currently only
+// reversing the fields.
+static std::vector<FieldDecl *> rearrange(std::vector<FieldDecl *> fields) {
+  std::stack<FieldDecl *> forReversal;
+  std::vector<FieldDecl *> newOrder;
 
-  virtual bool layoutRecordType(
-      const RecordDecl *Record, uint64_t &Size, uint64_t &Alignment,
-      llvm::DenseMap<const FieldDecl *, uint64_t> &FieldOffsets,
-      llvm::DenseMap<const CXXRecordDecl *, CharUnits> &BaseOffsets,
-      llvm::DenseMap<const CXXRecordDecl *, CharUnits> &VirtualBaseOffsets)
-      override {
-    auto &ctx = Instance.getASTContext();
-    Size = 0;
-
-    std::stack<FieldDecl *> fields;
-    for (auto field : Record->fields()) {
-      fields.push(field);
-    }
-
-    while (!fields.empty()) {
-      auto f = fields.top();
-      fields.pop();
-
-      auto width = ctx.getTypeInfo(f->getType()).Width;
-      auto align = ctx.getTypeInfo(f->getType()).Align;
-      Alignment = Alignment > align ? Alignment : align;
-
-      // llvm::errs() << "offset " <<  Size << ":\t" << f->getNameAsString() <<
-      // "\t(" << width << " bits)\n";
-      FieldOffsets[f] = Size;
-      Size += width;
-    }
-
-    // llvm::errs() << "Size: " << Size << " (" << Size / 8 << " bytes)\n";
-    return true;
-  }
-};
-
-class RandstructConsumer : public ASTConsumer {
-  CompilerInstance &Instance;
-
-public:
-  RandstructConsumer(CompilerInstance &Instance) : Instance(Instance) {
-    Instance.getASTContext().setExternalSource(
-        llvm::IntrusiveRefCntPtr<Randstruct>(new Randstruct(Instance)));
-  }
-};
-
-class RandstructAction : public PluginASTAction {
-protected:
-  std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
-                                                 llvm::StringRef) override {
-    return llvm::make_unique<RandstructConsumer>(CI);
+  for (auto field : fields)
+    forReversal.push(field);
+  while (!forReversal.empty()) {
+    newOrder.push_back(forReversal.top());
+    forReversal.pop();
   }
 
-  bool ParseArgs(const CompilerInstance &CI,
-                 const std::vector<std::string> &args) override {
-    for (unsigned i = 0, e = args.size(); i != e; ++i) {
-      llvm::errs() << "Randstruct arg = " << args[i] << "\n";
+  return newOrder;
+}
 
-      // Example error handling.
-      DiagnosticsEngine &D = CI.getDiagnostics();
-      if (args[i] == "-an-error") {
-        unsigned DiagID = D.getCustomDiagID(DiagnosticsEngine::Error,
-                                            "invalid argument '%0'");
-        D.Report(DiagID) << args[i];
-        return false;
-      } else if (args[i] == "-parse-template") {
-        if (i + 1 >= e) {
-          D.Report(D.getCustomDiagID(DiagnosticsEngine::Error,
-                                     "missing -parse-template argument"));
-          return false;
-        }
-        ++i;
-      }
-    }
-    if (!args.empty() && args[0] == "help")
-      PrintHelp(llvm::errs());
+static bool layout(std::vector<FieldDecl *> &fields, ASTContext &ctx,
+                   uint64_t &Size, uint64_t &Alignment,
+                   llvm::DenseMap<const FieldDecl *, uint64_t> &FieldOffsets) {
+  Alignment = 0;
+  Size = 0;
 
-    return true;
+#ifndef NDEBUG
+  llvm::errs() << "Type\tSize\tAlign\tOffset\tAligned?\n"
+               << "----\t----\t-----\t------\t--------\n";
+#endif
+
+  for (auto f : fields) {
+    auto width = ctx.getTypeInfo(f->getType()).Width;
+    auto align = ctx.getTypeInfo(f->getType()).Align;
+    Alignment = Alignment > align ? Alignment : align;
+
+    // https://en.wikipedia.org/wiki/Data_structure_alignment#Computing_padding
+    auto padding = (-Size & (align - 1));
+
+    FieldOffsets[f] = Size + padding;
+
+#ifndef NDEBUG
+    llvm::errs() << f->getType().getAsString() << "\t" << width << "\t" << align
+                 << "\t" << Size + padding << "\t"
+                 << ((Size + width + padding) % align == 0 ? "Yes" : "No")
+                 << "\n";
+#endif
+
+    Size += width + padding;
   }
-  void PrintHelp(llvm::raw_ostream &ros) {
-    ros << "Help for Randstruct plugin goes here\n";
+
+  // https://en.wikipedia.org/wiki/Data_structure_alignment#Computing_padding
+  auto tailpadded = (Size + (Alignment - 1)) & -Alignment;
+
+  Size = tailpadded;
+
+#ifndef NDEBUG
+  llvm::errs() << "\n"
+               << "Structure Size: " << Size << " bits ("
+               << "Should be "
+               << Size + (Alignment - (Size % Alignment)) % Alignment
+               << " bits)\n"
+               << "Alignment: " << Alignment << " bits\n"
+               << "\n";
+#endif
+
+  return true;
+}
+
+bool Randstruct::layoutRecordType(
+    const RecordDecl *Record, uint64_t &Size, uint64_t &Alignment,
+    llvm::DenseMap<const FieldDecl *, uint64_t> &FieldOffsets,
+    llvm::DenseMap<const CXXRecordDecl *, CharUnits> &BaseOffsets,
+    llvm::DenseMap<const CXXRecordDecl *, CharUnits> &VirtualBaseOffsets) {
+  auto &ctx = Instance.getASTContext();
+  Alignment = 0;
+  Size = 0;
+
+  std::vector<FieldDecl *> fields;
+  for (auto field : Record->fields()) {
+    fields.push_back(field);
   }
-};
 
-} // namespace
+  fields = rearrange(fields);
 
-static FrontendPluginRegistry::Add<RandstructAction>
-    X("randstruct", "randomizes the layout of structures");
+  return layout(fields, Instance.getASTContext(), Size, Alignment,
+                FieldOffsets);
+}
