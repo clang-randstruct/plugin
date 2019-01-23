@@ -1,4 +1,5 @@
 # Clang randstruct
+[![Build Status](http://35.197.18.171:8080/buildStatus/icon?job=clang_randstruct)](http://35.247.25.253:8080/job/clang_randstruct/)
 
 By: Jordan Cantrell, Nikk Forbus, James Foster, Connor Kuehl, Cole Nixon, Tim Pugh, Jeff Takahashi
 
