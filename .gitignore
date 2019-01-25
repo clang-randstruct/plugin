@@ -7,3 +7,4 @@ src/.settings/
 src/.cproject
 src/.project
 src/Debug/
+tests/venv/
