@@ -1,25 +1,19 @@
-#include <stack>
-#include <vector>
-
 #include "clang/AST/AST.h"
 #include "llvm/Support/raw_ostream.h"
+#include <algorithm>
+#include <random>
+#include <stack>
+#include <vector>
 
 #include "randstruct.h"
 
 // TODO Implement Randomization algorithm. Currently only
 // reversing the fields.
 static std::vector<FieldDecl *> rearrange(std::vector<FieldDecl *> fields) {
-  std::stack<FieldDecl *> forReversal;
-  std::vector<FieldDecl *> newOrder;
 
-  for (auto field : fields)
-    forReversal.push(field);
-  while (!forReversal.empty()) {
-    newOrder.push_back(forReversal.top());
-    forReversal.pop();
-  }
-
-  return newOrder;
+  auto rng = std::default_random_engine{};
+  std::shuffle(std::begin(fields), std::end(fields), rng);
+  return fields;
 }
 
 static bool layout(std::vector<FieldDecl *> &fields, ASTContext &ctx,
@@ -29,7 +23,7 @@ static bool layout(std::vector<FieldDecl *> &fields, ASTContext &ctx,
   Size = 0;
 
 #ifndef NDEBUG
-  llvm::errs() << "Type\tSize\tAlign\tOffset\tAligned?\n"
+  llvm::errs() << "Name\tType\tSize\tAlign\tOffset\tAligned?\n"
                << "----\t----\t-----\t------\t--------\n";
 #endif
 
@@ -44,8 +38,9 @@ static bool layout(std::vector<FieldDecl *> &fields, ASTContext &ctx,
     FieldOffsets[f] = Size + padding;
 
 #ifndef NDEBUG
-    llvm::errs() << f->getType().getAsString() << "\t" << width << "\t" << align
-                 << "\t" << Size + padding << "\t"
+    llvm::errs() << f->getNameAsString() << "\t" << f->getType().getAsString()
+                 << "\t" << width << "\t" << align << "\t" << Size + padding
+                 << "\t"
                  << ((Size + width + padding) % align == 0 ? "Yes" : "No")
                  << "\n";
 #endif
