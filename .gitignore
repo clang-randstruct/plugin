@@ -8,3 +8,4 @@ src/.cproject
 src/.project
 src/Debug/
 tests/venv/
+tests/.idea/
