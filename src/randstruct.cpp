@@ -79,7 +79,9 @@ bool Randstruct::layoutRecordType(
   auto &ctx = Instance.getASTContext();
   Alignment = 0;
   Size = 0;
-
+  if (Record->isUnion()) {
+    return false;
+  }
   std::vector<FieldDecl *> fields;
   for (auto field : Record->fields()) {
     fields.push_back(field);
