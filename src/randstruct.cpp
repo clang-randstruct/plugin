@@ -16,9 +16,10 @@ static std::vector<FieldDecl *> rearrange(std::vector<FieldDecl *> fields) {
   return fields;
 }
 
-static bool layout(std::vector<FieldDecl *> &fields, ASTContext &ctx,
+static bool layout(const RecordDecl *Record, std::vector<FieldDecl *> &fields,
                    uint64_t &Size, uint64_t &Alignment,
-                   llvm::DenseMap<const FieldDecl *, uint64_t> &FieldOffsets) {
+                   llvm::DenseMap<const FieldDecl *, uint64_t> &FieldOffsets,
+                   ASTContext &ctx) {
   Alignment = 0;
   Size = 0;
 
@@ -30,6 +31,7 @@ static bool layout(std::vector<FieldDecl *> &fields, ASTContext &ctx,
   for (auto f : fields) {
     auto width = ctx.getTypeInfo(f->getType()).Width;
     auto align = ctx.getTypeInfo(f->getType()).Align;
+
     Alignment = Alignment > align ? Alignment : align;
 
     // https://en.wikipedia.org/wiki/Data_structure_alignment#Computing_padding
@@ -82,6 +84,6 @@ bool Randstruct::layoutRecordType(
 
   fields = rearrange(fields);
 
-  return layout(fields, Instance.getASTContext(), Size, Alignment,
-                FieldOffsets);
+  return layout(Record, fields, Size, Alignment,
+                FieldOffsets, Instance.getASTContext());
 }
