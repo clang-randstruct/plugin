@@ -7,10 +7,7 @@
 
 #include "randstruct.h"
 
-// TODO Implement Randomization algorithm. Currently only
-// reversing the fields.
 static std::vector<FieldDecl *> rearrange(std::vector<FieldDecl *> fields) {
-
   auto rng = std::default_random_engine{};
   std::shuffle(std::begin(fields), std::end(fields), rng);
   return fields;
@@ -58,7 +55,7 @@ static bool layout(const RecordDecl *Record, std::vector<FieldDecl *> &fields,
   // Respect the programmer's requested alignment from the structure
   // by overriding what we've calculated so far.
   if (auto alignAttr = Record->getAttr<AlignedAttr>()) {
-      Alignment = alignAttr->getAlignment(ctx);
+    Alignment = alignAttr->getAlignment(ctx);
   }
 
 #ifndef NDEBUG
@@ -90,6 +87,6 @@ bool Randstruct::layoutRecordType(
 
   fields = rearrange(fields);
 
-  return layout(Record, fields, Size, Alignment,
-                FieldOffsets, Instance.getASTContext());
+  return layout(Record, fields, Size, Alignment, FieldOffsets,
+                Instance.getASTContext());
 }
