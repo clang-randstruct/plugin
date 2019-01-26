@@ -55,6 +55,12 @@ static bool layout(const RecordDecl *Record, std::vector<FieldDecl *> &fields,
 
   Size = tailpadded;
 
+  // Respect the programmer's requested alignment from the structure
+  // by overriding what we've calculated so far.
+  if (auto alignAttr = Record->getAttr<AlignedAttr>()) {
+      Alignment = alignAttr->getAlignment(ctx);
+  }
+
 #ifndef NDEBUG
   llvm::errs() << "\n"
                << "Structure Size: " << Size << " bits ("
