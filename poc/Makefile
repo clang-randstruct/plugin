@@ -9,6 +9,7 @@ all:
 	objdump -SD poc > poc.asm
 
 tests:
-	clang -Xclang -load -Xclang $(PLUGIN) -Xclang -add-plugin -Xclang randstruct -Xclang -plugin-arg-randstruct -Xclang $(RAND-SEED-SCRIPT) -S -emit-llvm -o with_plugin.ll poc.c
+	clang -Xclang -load -Xclang $(PLUGIN) -Xclang -add-plugin -Xclang randstruct -Xclang -plugin-arg-randstruct -Xclang $(RAND-SEED-SCRIPT) -S -emit-llvm -o ../tests/with_plugin.ll poc.c
 
-	clang -S -emit-llvm -o without_plugin.ll poc.c
+	clang -S -emit-llvm -o ../tests/without_plugin.ll poc.c
+	python3 ../tests/diff_testing.py ../tests/without_plugin.ll ../tests/with_plugin.ll

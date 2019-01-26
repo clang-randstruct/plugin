@@ -1,8 +1,13 @@
+import sys
 # Code from: https://www.opentechguides.com/how-to/article/python/58/python-file-comparison.html
 # Ask the user to enter the names of files to compare
 
-fname1 = input("Enter the first filename: ")
-fname2 = input("Enter the second filename: ")
+#fname1 = input("Enter the first filename: ")
+#fname2 = input("Enter the second filename: ")
+if (len(sys.argv) != 3):
+  quit(2)
+fname1 = sys.argv[1]
+fname2 = sys.argv[2]
 
 # Open file for reading in text mode (default mode)
 f1 = open(fname1)
