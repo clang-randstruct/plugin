@@ -7,18 +7,16 @@
 
 #include "randstruct.h"
 
-// TODO Implement Randomization algorithm. Currently only
-// reversing the fields.
 static std::vector<FieldDecl *> rearrange(std::vector<FieldDecl *> fields) {
-
   auto rng = std::default_random_engine{};
   std::shuffle(std::begin(fields), std::end(fields), rng);
   return fields;
 }
 
-static bool layout(std::vector<FieldDecl *> &fields, ASTContext &ctx,
+static bool layout(const RecordDecl *Record, std::vector<FieldDecl *> &fields,
                    uint64_t &Size, uint64_t &Alignment,
-                   llvm::DenseMap<const FieldDecl *, uint64_t> &FieldOffsets) {
+                   llvm::DenseMap<const FieldDecl *, uint64_t> &FieldOffsets,
+                   ASTContext &ctx) {
   Alignment = 0;
   Size = 0;
 
@@ -30,6 +28,7 @@ static bool layout(std::vector<FieldDecl *> &fields, ASTContext &ctx,
   for (auto f : fields) {
     auto width = ctx.getTypeInfo(f->getType()).Width;
     auto align = ctx.getTypeInfo(f->getType()).Align;
+
     Alignment = Alignment > align ? Alignment : align;
 
     // https://en.wikipedia.org/wiki/Data_structure_alignment#Computing_padding
@@ -52,6 +51,12 @@ static bool layout(std::vector<FieldDecl *> &fields, ASTContext &ctx,
   auto tailpadded = (Size + (Alignment - 1)) & -Alignment;
 
   Size = tailpadded;
+
+  // Respect the programmer's requested alignment from the structure
+  // by overriding what we've calculated so far.
+  if (auto alignAttr = Record->getAttr<AlignedAttr>()) {
+    Alignment = alignAttr->getAlignment(ctx);
+  }
 
 #ifndef NDEBUG
   llvm::errs() << "\n"
@@ -82,6 +87,6 @@ bool Randstruct::layoutRecordType(
 
   fields = rearrange(fields);
 
-  return layout(fields, Instance.getASTContext(), Size, Alignment,
-                FieldOffsets);
+  return layout(Record, fields, Size, Alignment, FieldOffsets,
+                Instance.getASTContext());
 }
