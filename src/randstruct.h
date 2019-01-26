@@ -8,6 +8,12 @@ using namespace clang;
 class Randstruct : public ExternalASTSource {
 private:
   CompilerInstance &Instance;
+  char * seed;
+
+protected:
+  int ParseArgs(
+      const CompilerInstance &CI, 
+      const std::vector<std::string> &args);
 
 public:
   Randstruct(CompilerInstance &I) : Instance(I) {}
@@ -17,5 +23,5 @@ public:
       llvm::DenseMap<const FieldDecl *, uint64_t> &FieldOffsets,
       llvm::DenseMap<const CXXRecordDecl *, CharUnits> &BaseOffsets,
       llvm::DenseMap<const CXXRecordDecl *, CharUnits> &VirtualBaseOffsets)
-      override;
+      override; 
 };

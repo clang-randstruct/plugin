@@ -1,0 +1,1 @@
+/usr/bin/c++ -fPIC   -shared -Wl,-soname,librandstruct.so -o ../lib/librandstruct.so CMakeFiles/randstruct.dir/plugin.cpp.o CMakeFiles/randstruct.dir/randstruct.cpp.o 

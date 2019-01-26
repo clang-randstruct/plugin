@@ -90,3 +90,10 @@ bool Randstruct::layoutRecordType(
   return layout(fields, Instance.getASTContext(), Size, Alignment,
                 FieldOffsets);
 }
+
+int Randstruct::ParseArgs(
+    const CompilerInstance &CI,
+    const std::vector<std::string> &args) {
+  llvm::outs() << args[0];
+  return 0;
+}

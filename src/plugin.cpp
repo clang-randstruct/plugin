@@ -53,6 +53,7 @@ protected:
 
     return true;
   }
+
   void PrintHelp(llvm::raw_ostream &ros) {
     ros << "Help for Randstruct plugin goes here\n";
   }
