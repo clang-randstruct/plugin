@@ -7,10 +7,18 @@
 
 #include "randstruct.h"
 
-static std::vector<FieldDecl *> rearrange(std::vector<FieldDecl *> fields) {
+static std::vector<FieldDecl *> randomize(std::vector<FieldDecl *> fields) {
   auto rng = std::default_random_engine{};
   std::shuffle(std::begin(fields), std::end(fields), rng);
   return fields;
+}
+
+static std::vector<FieldDecl *> perfrandomize(std::vector<FieldDecl *> fields) {
+    return fields;
+}
+
+static std::vector<FieldDecl *> rearrange(std::vector<FieldDecl *> fields) {
+    return randomize(fields);
 }
 
 static bool layout(const RecordDecl *Record, std::vector<FieldDecl *> &fields,
