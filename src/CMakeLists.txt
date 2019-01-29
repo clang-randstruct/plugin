@@ -1,4 +1,4 @@
-add_library(randstruct SHARED plugin.cpp randstruct.cpp)
+add_library(randstruct SHARED plugin.cpp randstruct.cpp bucket.cpp)
 target_include_directories(randstruct PUBLIC ${CLANG_INCLUDE_DIRS})
 target_compile_definitions(randstruct PUBLIC ${CLANG_DEFINITIONS})
 #target_compile_options(randstruct PUBLIC -fno-exceptions -fno-rtti)
