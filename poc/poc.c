@@ -11,6 +11,18 @@ struct ints {
   int b;
 };
 
+struct perf {
+	int a;
+	long tim;
+	unsigned b : 1;
+	unsigned c : 1;
+	short d;
+	char e;
+	long james;
+	double cole;
+	long jordan;
+};
+
 int main(void) {
   char *first = "I'm the first string!";
   char *second = "And I'm the second string!";
@@ -18,6 +30,8 @@ int main(void) {
   struct mystruct m;
   m.first = first;
   m.second = second;
+
+  struct perf p;
 
   // There shouldn't be any padding for this structure here,
   // so it should be the width of two (char*) pointers == 16 bytes
