@@ -14,8 +14,15 @@ std::vector<FieldDecl *> Bucket::randomize() {
 }
 
 bool Bucket::canFit(size_t size) const {
-    // A bucket can only fill up to a cache line.
-    return this->size + size <= CACHE_LINE;
+    // We will say we can fit any size if the bucket is empty
+    // because there are many instances where a field is much
+    // larger than 64 bits (i.e., an array, a structure, etc)
+    // but it still must be placed into a bucket.
+    //
+    // Otherwise, if the bucket has elements and we're still
+    // trying to create a cache-line sized grouping, we cannot
+    // fit a larger field in here.
+    return empty() || this->size + size <= CACHE_LINE;
 }
 
 void Bucket::add(FieldDecl *field, size_t size) {
