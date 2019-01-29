@@ -1,0 +1,24 @@
+dist: xenial
+language: cpp
+addons:
+    apt:
+        sources:
+            - llvm-toolchain-xenial-7
+        packages:
+            - cmake
+            - clang-7
+            - libclang-7-dev
+
+env:
+    - MATRIX_EVAL="CXX=clang++ && CC=clang"
+
+before_script:
+    - sudo ln -s /usr/bin/clang-7 /usr/bin/clang
+    - sudo ln -s /usr/bin/clang++-7 /usr/bin/clang++
+    - eval "${MATRIX_EVAL}"
+
+script:
+    - mkdir build && cd build
+    - cmake ..
+    - cd ..
+    - make -C build
