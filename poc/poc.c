@@ -18,6 +18,7 @@ struct perf {
 	unsigned c : 1;
 	short d;
 	char e;
+	int big[1000];
 	long james;
 	double cole;
 	long jordan;

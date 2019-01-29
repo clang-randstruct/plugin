@@ -20,6 +20,7 @@ class Bucket {
         virtual bool isBitfieldRun() const;
         /// Is this bucket full?
         bool full() const;
+        bool empty() const;
 
     protected:
         size_t size;

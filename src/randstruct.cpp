@@ -69,7 +69,7 @@ std::vector<FieldDecl *> Randstruct::perfrandomize(std::vector<FieldDecl *> fiel
             auto width = ctx.getTypeInfo((*field)->getType()).Width;
 
             // If we can fit, add it.
-            if (currentBucket->canFit(width)) {
+            if (currentBucket->canFit(width) || currentBucket->empty()) {
                 currentBucket->add(*field, width);
                 fields.erase(field);
 

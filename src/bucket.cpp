@@ -30,7 +30,11 @@ bool Bucket::isBitfieldRun() const {
 
 bool Bucket::full() const {
     // We're full if our size is a cache line.
-    return size == CACHE_LINE;
+    return size >= CACHE_LINE;
+}
+
+bool Bucket::empty() const {
+    return size == 0;
 }
 
 std::vector<FieldDecl *> BitfieldRun::randomize() {
