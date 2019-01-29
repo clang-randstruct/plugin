@@ -36,7 +36,7 @@ std::vector<FieldDecl *> Randstruct::perfrandomize(std::vector<FieldDecl *> fiel
         // If we've skipped more fields than we have remaining to place,
         // that means that they can't fit in our current bucket, and we
         // need to start a new one.
-        if (skipped > fields.size()) {
+        if (skipped >= fields.size()) {
             skipped = 0;
             buckets.push_back(std::move(currentBucket));
         }
