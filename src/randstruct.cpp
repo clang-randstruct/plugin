@@ -28,7 +28,6 @@ std::vector<FieldDecl *> Randstruct::perfrandomize(std::vector<FieldDecl *> fiel
         if (skipped > fields.size()) {
             skipped = 0;
             buckets.push_back(std::move(currentBucket));
-            currentBucket = nullptr;
         }
         auto field = fields.begin();
 
@@ -42,7 +41,6 @@ std::vector<FieldDecl *> Randstruct::perfrandomize(std::vector<FieldDecl *> fiel
         } else {
             if (currentBitfieldRun) {
                 buckets.push_back(std::move(currentBitfieldRun));
-                currentBitfieldRun = nullptr;
             }
             if (!currentBucket) {
                 currentBucket = std::make_unique<Bucket>();
@@ -56,8 +54,6 @@ std::vector<FieldDecl *> Randstruct::perfrandomize(std::vector<FieldDecl *> fiel
                 if (currentBucket->full()) {
                     skipped = 0;
                     buckets.push_back(std::move(currentBucket));
-                    // TODO verify we need this:
-                    currentBucket = nullptr;
                 }
             } else {
                 // Move to the end for processing later
@@ -70,13 +66,10 @@ std::vector<FieldDecl *> Randstruct::perfrandomize(std::vector<FieldDecl *> fiel
 
     if (currentBucket) {
         buckets.push_back(std::move(currentBucket));
-        // TODO verify we need this:
-        currentBucket = nullptr;
     }
 
     if (currentBitfieldRun) {
         buckets.push_back(std::move(currentBitfieldRun));
-        currentBitfieldRun = nullptr;
     }
 
     // TODO use seed
