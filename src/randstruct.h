@@ -9,6 +9,13 @@ class Randstruct : public ExternalASTSource {
 private:
   CompilerInstance &Instance;
 
+  std::vector<FieldDecl *> randomize(std::vector<FieldDecl *> fields);
+  std::vector<FieldDecl *> perfrandomize(std::vector<FieldDecl *> fields);
+  std::vector<FieldDecl *> rearrange(std::vector<FieldDecl *> fields);
+  bool layout(const RecordDecl *Record, std::vector<FieldDecl *> &fields,
+                   uint64_t &Size, uint64_t &Alignment,
+                   llvm::DenseMap<const FieldDecl *, uint64_t> &FieldOffsets,
+                   ASTContext &ctx);
 public:
   Randstruct(CompilerInstance &I) : Instance(I) {}
 

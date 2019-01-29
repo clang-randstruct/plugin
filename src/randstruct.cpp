@@ -1,27 +1,102 @@
 #include "clang/AST/AST.h"
 #include "llvm/Support/raw_ostream.h"
 #include <algorithm>
+#include <memory>
 #include <random>
 #include <stack>
 #include <vector>
 
+#include "bucket.h"
 #include "randstruct.h"
 
-static std::vector<FieldDecl *> randomize(std::vector<FieldDecl *> fields) {
+std::vector<FieldDecl *> Randstruct::randomize(std::vector<FieldDecl *> fields) {
   auto rng = std::default_random_engine{};
   std::shuffle(std::begin(fields), std::end(fields), rng);
   return fields;
 }
 
-static std::vector<FieldDecl *> perfrandomize(std::vector<FieldDecl *> fields) {
-    return fields;
+std::vector<FieldDecl *> Randstruct::perfrandomize(std::vector<FieldDecl *> fields) {
+    std::vector<std::unique_ptr<Bucket>> buckets;
+
+    std::unique_ptr<Bucket> currentBucket = nullptr;
+    std::unique_ptr<Bucket> currentBitfieldRun = nullptr;
+    auto& ctx = Instance.getASTContext();
+
+    auto skipped = 0;
+
+    while (!fields.empty()) {
+        if (skipped > fields.size()) {
+            skipped = 0;
+            buckets.push_back(std::move(currentBucket));
+            currentBucket = nullptr;
+        }
+        auto field = fields.begin();
+
+        if ((*field)->isBitField()) {
+            if (!currentBitfieldRun) {
+                currentBitfieldRun = std::make_unique<BitfieldRun>();
+            }
+
+            currentBitfieldRun->add(*field, 1);
+            fields.erase(field);
+        } else {
+            if (currentBitfieldRun) {
+                buckets.push_back(std::move(currentBitfieldRun));
+                currentBitfieldRun = nullptr;
+            }
+            if (!currentBucket) {
+                currentBucket = std::make_unique<Bucket>();
+            }
+
+            auto width = ctx.getTypeInfo((*field)->getType()).Width;
+            if (currentBucket->canFit(width)) {
+                currentBucket->add(*field, width);
+                fields.erase(field);
+
+                if (currentBucket->full()) {
+                    skipped = 0;
+                    buckets.push_back(std::move(currentBucket));
+                    // TODO verify we need this:
+                    currentBucket = nullptr;
+                }
+            } else {
+                // Move to the end for processing later
+                ++skipped;
+                fields.push_back(*field);
+                fields.erase(field);
+            }
+        }
+    }
+
+    if (currentBucket) {
+        buckets.push_back(std::move(currentBucket));
+        // TODO verify we need this:
+        currentBucket = nullptr;
+    }
+
+    if (currentBitfieldRun) {
+        buckets.push_back(std::move(currentBitfieldRun));
+        currentBitfieldRun = nullptr;
+    }
+
+    // TODO use seed
+    auto rng = std::default_random_engine{};
+    std::shuffle(std::begin(buckets), std::end(buckets), rng);
+
+    std::vector<FieldDecl *> finalOrder;
+    for (auto& bucket : buckets) {
+        auto randomized = bucket->randomize();
+        finalOrder.insert(finalOrder.end(), randomized.begin(), randomized.end());
+    }
+
+    return finalOrder;
 }
 
-static std::vector<FieldDecl *> rearrange(std::vector<FieldDecl *> fields) {
-    return randomize(fields);
+std::vector<FieldDecl *> Randstruct::rearrange(std::vector<FieldDecl *> fields) {
+    return perfrandomize(fields);
 }
 
-static bool layout(const RecordDecl *Record, std::vector<FieldDecl *> &fields,
+bool Randstruct::layout(const RecordDecl *Record, std::vector<FieldDecl *> &fields,
                    uint64_t &Size, uint64_t &Alignment,
                    llvm::DenseMap<const FieldDecl *, uint64_t> &FieldOffsets,
                    ASTContext &ctx) {
@@ -39,6 +114,7 @@ static bool layout(const RecordDecl *Record, std::vector<FieldDecl *> &fields,
 
     Alignment = Alignment > align ? Alignment : align;
 
+    // TODO: pad bitfields?
     // https://en.wikipedia.org/wiki/Data_structure_alignment#Computing_padding
     auto padding = (-Size & (align - 1));
 
