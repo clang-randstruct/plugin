@@ -8,44 +8,40 @@
 #include "llvm/Support/raw_ostream.h"
 
 #include "randstruct.h"
+#include <stdlib.h>
 
 namespace {
 class RandstructConsumer : public ASTConsumer {
   CompilerInstance &Instance;
 
 public:
-  RandstructConsumer(CompilerInstance &Instance) : Instance(Instance) {
+  RandstructConsumer(CompilerInstance &Instance, std::string &seed)
+      : Instance(Instance) {
     Instance.getASTContext().setExternalSource(
-        llvm::IntrusiveRefCntPtr<Randstruct>(new Randstruct(Instance)));
+        llvm::IntrusiveRefCntPtr<Randstruct>(new Randstruct(Instance, seed)));
   }
 };
 
 class RandstructAction : public PluginASTAction {
 protected:
+  std::string seed;
+
   std::unique_ptr<ASTConsumer> CreateASTConsumer(CompilerInstance &CI,
                                                  llvm::StringRef) override {
-    return llvm::make_unique<RandstructConsumer>(CI);
+    return llvm::make_unique<RandstructConsumer>(CI, seed);
   }
 
   bool ParseArgs(const CompilerInstance &CI,
                  const std::vector<std::string> &args) override {
     for (unsigned i = 0, e = args.size(); i != e; ++i) {
-      llvm::errs() << "Randstruct arg = " << args[i] << "\n";
-
-      // Example error handling.
       DiagnosticsEngine &D = CI.getDiagnostics();
-      if (args[i] == "-an-error") {
-        unsigned DiagID = D.getCustomDiagID(DiagnosticsEngine::Error,
-                                            "invalid argument '%0'");
-        D.Report(DiagID) << args[i];
-        return false;
-      } else if (args[i] == "-parse-template") {
+      if (args[i] == "-rand-seed") {
         if (i + 1 >= e) {
           D.Report(D.getCustomDiagID(DiagnosticsEngine::Error,
-                                     "missing -parse-template argument"));
+                                     "missing randomization seed"));
           return false;
         }
-        ++i;
+        seed = args[i + 1];
       }
     }
     if (!args.empty() && args[0] == "help")
