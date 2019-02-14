@@ -1,3 +1,9 @@
+# STOP! This project has moved! :-)
+
+We are porting this code into the Clang compiler proper instead of developing this as a plugin.
+
+**We're over here now: https://github.com/connorkuehl/llvm-project**
+
 # Clang randstruct
 [![Build Status](https://travis-ci.org/connorkuehl/clang_randstruct.svg?branch=master)](https://travis-ci.org/connorkuehl/clang_randstruct)
 
